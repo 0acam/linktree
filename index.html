@@ -71,7 +71,7 @@ footer{margin-top:30px; text-align:center; color:var(--soft); font-size:.85rem}
 <main>
   <header>
     <div class="logo-lg">
-      <img src="https://cdn.discordapp.com/avatars/969044763162599424/d3a6b803da67ac2d97c0b1636b28c6fe.webp?size=1536" alt="0acam avatar" width="96" height="96" referrerpolicy="no-referrer">
+      <img id="avatar" src="https://dcdn.dstn.to/avatars/969044763162599424" alt="0acam avatar" width="96" height="96" referrerpolicy="no-referrer">
     </div>
     <h1>0acam Discord Server Links</h1>
     <p>Pick a server and jump in.</p>
@@ -80,6 +80,40 @@ footer{margin-top:30px; text-align:center; color:var(--soft); font-size:.85rem}
   <footer>Invite not working? Message 0acam on Discord.</footer>
 </main>
 <script>
+// ---- Live Discord avatar (auto-updates, supports GIFs) ----
+const USER_ID = "969044763162599424";
+// Tried in order; the first one that loads wins.
+const AVATAR_SOURCES = [
+  "https://dcdn.dstn.to/avatars/" + USER_ID,   // always resolves to the current avatar (gif or image)
+  "https://api.lanyard.rest/v1/users/" + USER_ID, // fallback via Lanyard (JSON, see below)
+  "https://cdn.discordapp.com/avatars/969044763162599424/d3a6b803da67ac2d97c0b1636b28c6fe.webp?size=1536" // last resort: static snapshot
+];
+(function(){
+  const img = document.getElementById("avatar");
+  let step = 0;
+  img.addEventListener("error", async function onErr(){
+    step++;
+    if (step === 1) {
+      // Try Lanyard: needs you to be in discord.gg/lanyard
+      try {
+        const r = await fetch(AVATAR_SOURCES[1]);
+        const j = await r.json();
+        const u = j && j.data && j.data.discord_user;
+        if (u && u.avatar) {
+          const ext = u.avatar.startsWith("a_") ? "gif" : "png";
+          img.src = "https://cdn.discordapp.com/avatars/" + USER_ID + "/" + u.avatar + "." + ext + "?size=1024";
+          return;
+        }
+      } catch(e) {}
+      step++;
+    }
+    if (step >= 2) {
+      img.removeEventListener("error", onErr);
+      img.src = AVATAR_SOURCES[2];
+    }
+  });
+})();
+
 // Edit this list: swap each url for your real invite link.
 const servers = [
   { name: "RPL",   desc: "Revolutionary Pro League", url: "https://discord.gg/revolutionaryproleague" },
